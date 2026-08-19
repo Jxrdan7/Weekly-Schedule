@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0D12;
+    --surface:#12161E;
+    --surface-2:#181D27;
+    --line:#232936;
+    --gold:#E8A33D;
+    --teal:#2FBFAE;
+    --violet:#8D7FE0;
+    --coral:#E8626F;
+    --slate:#5B6B85;
+    --rust:#C97C4F;
+    --rose:#D66B92;
+    --cyan:#4FB8D6;
+    --pink:#F2789F;
+    --text:#E9ECF2;
+    --muted:#7C8699;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    padding:20px 14px 60px;
+  }
+  .wrap{max-width:960px; margin:0 auto;}
+
+  header{margin-bottom:22px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.18em;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px,6vw,40px);
+    letter-spacing:-0.01em;
+    line-height:1.05;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:14px;
+    margin-top:6px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  .tabs{
+    display:flex;
+    gap:6px;
+    margin:22px 0 18px;
+    overflow-x:auto;
+    padding-bottom:4px;
+  }
+  .tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.05em;
+    background:var(--surface);
+    border:1px solid var(--line);
+    color:var(--muted);
+    padding:10px 6px;
+    border-radius:8px;
+    cursor:pointer;
+    flex:1 0 auto;
+    min-width:44px;
+    text-align:center;
+    transition:all .15s ease;
+    position:relative;
+  }
+  .tab:hover{color:var(--text); border-color:#333c4c;}
+  .tab.active{
+    background:var(--surface-2);
+    color:var(--gold);
+    border-color:var(--gold);
+  }
+  .tab .dot{
+    width:4px; height:4px; border-radius:50%;
+    background:var(--gold);
+    position:absolute; top:6px; right:6px;
+    display:none;
+  }
+  .tab.today .dot{display:block;}
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap:18px;
+  }
+  @media (max-width: 720px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px;
+  }
+  .panel-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:16px;
+    margin-bottom:4px;
+  }
+  .panel-note{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:16px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  /* Timeline */
+  .timeline-scroll{ overflow-x:auto; }
+  .timeline{
+    position:relative;
+    display:flex;
+    min-height:640px;
+  }
+  .axis{
+    width:52px;
+    flex-shrink:0;
+    position:relative;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+  }
+  .axis span{
+    position:absolute;
+    right:8px;
+    transform:translateY(-50%);
+  }
+  .track{
+    position:relative;
+    flex:1;
+    border-left:1px solid var(--line);
+  }
+  .hourline{
+    position:absolute;
+    left:0; right:0;
+    border-top:1px dashed #1c212c;
+  }
+  .block{
+    position:absolute;
+    left:6px; right:6px;
+    border-radius:6px;
+    padding:4px 10px;
+    overflow:hidden;
+    border-left:3px solid transparent;
+    cursor:pointer;
+    transition:opacity .15s ease;
+  }
+  .block.done{ opacity:0.4; }
+  .block.done .btitle{ text-decoration:line-through; }
+  .block .btitle{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    line-height:1.2;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    overflow:hidden;
+    padding-right:16px;
+  }
+  .block .bcheck{
+    position:absolute;
+    top:4px; right:6px;
+    width:11px; height:11px;
+    border-radius:3px;
+    border:1.5px solid rgba(233,236,242,0.4);
+    background:transparent;
+  }
+  .block.done .bcheck{
+    background:var(--gold);
+    border-color:var(--gold);
+  }
+  .block.done .bcheck::after{
+    content:'✓';
+    position:absolute;
+    top:-4px; left:1px;
+    font-size:9px;
+    color:var(--ink);
+    font-weight:700;
+  }
+  .upnext{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--gold);
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 12px;
+    margin-bottom:14px;
+  }
+  .upnext b{ color:var(--text); font-family:'IBM Plex Sans', sans-serif; }
+
+  .banner-row{ display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+  .module-banner{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--text);
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-left:3px solid var(--violet);
+    border-radius:8px;
+    padding:10px 14px;
+  }
+  .module-banner b{ color:var(--violet); font-family:'Space Grotesk', sans-serif; }
+  .exam-alert{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--text);
+    background:#301A20;
+    border:1px solid var(--coral);
+    border-radius:8px;
+    padding:10px 14px;
+  }
+  .exam-alert b{ color:var(--coral); font-family:'Space Grotesk', sans-serif; }
+
+  .budget-bar{
+    display:flex;
+    height:16px;
+    border-radius:8px;
+    overflow:hidden;
+    margin:6px 0 14px;
+    background:var(--surface-2);
+  }
+  .budget-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 14px;
+    font-size:11px;
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--muted);
+  }
+  .budget-legend div{ display:flex; align-items:center; gap:5px; }
+  .budget-legend .dot{ width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+  .budget-legend b{ color:var(--text); font-family:'IBM Plex Sans', sans-serif; }
+  .block .btime{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:rgba(233,236,242,0.65);
+    margin-top:1px;
+  }
+  .now-line{
+    position:absolute;
+    left:0; right:0;
+    height:0;
+    border-top:2px solid var(--gold);
+    z-index:5;
+  }
+  .now-label{
+    position:absolute;
+    right:6px;
+    top:-9px;
+    background:var(--gold);
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    font-weight:600;
+    padding:1px 5px;
+    border-radius:4px;
+  }
+
+  /* category colors */
+  .cat-sleep{ background:#171B24; border-left-color:var(--slate); color:var(--muted); }
+  .cat-transit{ background:#182233; border-left-color:var(--slate); }
+  .cat-work{ background:#152238; border-left-color:#3E6FA6; }
+  .cat-move{ background:#0F2E2B; border-left-color:var(--teal); }
+  .cat-study{ background:#231F3A; border-left-color:var(--violet); }
+  .cat-class{ background:#301A20; border-left-color:var(--coral); }
+  .cat-meal{ background:#2A2113; border-left-color:var(--gold); }
+  .cat-free{ background:#1A1E27; border-left-color:#3a4152; color:var(--muted); }
+  .cat-source{ background:#2A1F16; border-left-color:var(--rust); }
+  .cat-books{ background:#2B1922; border-left-color:var(--rose); }
+  .cat-jobs{ background:#152730; border-left-color:var(--cyan); }
+  .cat-personal{ background:#301923; border-left-color:var(--pink); }
+
+  /* Legend */
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 16px;
+    margin-top:16px;
+    font-size:11.5px;
+    color:var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .legend div{display:flex; align-items:center; gap:6px;}
+  .swatch{width:9px; height:9px; border-radius:2px;}
+
+  /* Summary panel */
+  .stat{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .stat:last-child{border-bottom:none;}
+  .stat-label{font-size:12.5px; color:var(--muted);}
+  .stat-value{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:20px;
+  }
+  .stat-value span{
+    font-size:11px;
+    color:var(--muted);
+    font-weight:500;
+    margin-left:3px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  .keydates{margin-top:18px;}
+  .kd-item{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    padding:7px 0;
+    border-bottom:1px solid var(--line);
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--muted);
+  }
+  .kd-item:last-child{border-bottom:none;}
+  .kd-item b{color:var(--text); font-family:'IBM Plex Sans', sans-serif; font-weight:500;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Session · Weekly Routine</div>
+    <h1>Work / Gym / Georgetown</h1>
+    <div class="sub">MSFO 6820 · Saxa 2 · Tue 5:55–7:30 PM ET</div>
+    <div class="banner-row">
+      <div class="module-banner" id="moduleBanner" style="display:none;"></div>
+      <div class="exam-alert" id="examAlert" style="display:none;"></div>
+    </div>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="panel-title" id="dayTitle">Monday</div>
+      <div class="panel-note" id="dayNote">Standard weekday</div>
+      <div class="upnext" id="upNext" style="display:none;"></div>
+      <div class="timeline-scroll">
+        <div class="timeline" id="timeline">
+          <div class="axis" id="axis"></div>
+          <div class="track" id="track"></div>
+        </div>
+      </div>
+      <div class="legend">
+        <div><span class="swatch" style="background:var(--slate)"></span>Sleep / Transit</div>
+        <div><span class="swatch" style="background:#3E6FA6"></span>Work</div>
+        <div><span class="swatch" style="background:var(--teal)"></span>Gym / Cardio</div>
+        <div><span class="swatch" style="background:var(--violet)"></span>Study</div>
+        <div><span class="swatch" style="background:var(--coral)"></span>Class</div>
+        <div><span class="swatch" style="background:var(--gold)"></span>Meal</div>
+        <div><span class="swatch" style="background:var(--cyan)"></span>Job search</div>
+        <div><span class="swatch" style="background:var(--rust)"></span>JPW sourcing</div>
+        <div><span class="swatch" style="background:var(--rose)"></span>Bookkeeping</div>
+        <div><span class="swatch" style="background:var(--pink)"></span>Girlfriend time</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="panel-title">Weekly load</div>
+        <div class="stat"><div class="stat-label">Blocks completed</div><div class="stat-value" id="completionStat">–<span>this week</span></div></div>
+        <div class="stat"><div class="stat-label">Gym sessions</div><div class="stat-value">4<span>/wk, 90min</span></div></div>
+        <div class="stat"><div class="stat-label">Cardio-only mornings</div><div class="stat-value">2<span>Tue, Fri</span></div></div>
+        <div class="stat"><div class="stat-label">Dedicated study</div><div class="stat-value">10.5<span>hrs/wk (90min/day)</span></div></div>
+        <div class="stat"><div class="stat-label">MSFLive class</div><div class="stat-value">1.5<span>hrs/wk</span></div></div>
+        <div class="stat"><div class="stat-label">Job applications</div><div class="stat-value">1.7<span>hrs/wk</span></div></div>
+        <div class="stat"><div class="stat-label">JPW sourcing</div><div class="stat-value">1.5<span>hrs/wk, Sat</span></div></div>
+        <div class="stat"><div class="stat-label">Henderson bookkeeping</div><div class="stat-value">2<span>hrs/wk, Sat</span></div></div>
+        <div class="stat"><div class="stat-label">Weeknight sleep (Mon–Thu)</div><div class="stat-value">6<span>hrs/night</span></div></div>
+        <div class="stat"><div class="stat-label">Weekly commute</div><div class="stat-value">16.25<span>hrs/wk</span></div></div>
+      </div>
+
+      <div class="panel keydates">
+        <div class="panel-title" style="margin-bottom:12px;">Key dates</div>
+        <div class="kd-item"><span>Modules 1–6</span><b>Aug 24 – Oct 6</b></div>
+        <div class="kd-item"><span>Quiz window</span><b>Aug 26–30</b></div>
+        <div class="kd-item"><span>Midterm window</span><b>Sep 16–20</b></div>
+        <div class="kd-item"><span>Final window</span><b>Oct 7–11</b></div>
+        <div class="kd-item"><span>NYC alumni event</span><b>Sep 2</b></div>
+        <div class="kd-item"><span>HW / posts due</span><b>Sun 11:59 PM</b></div>
+        <div class="kd-item"><span>BCU Cash Rewards Visa</span><b>Early–mid Sep</b></div>
+        <div class="kd-item"><span>BCU auto refi (rate drop)</span><b>Early–mid Oct</b></div>
+        <div class="kd-item"><span>Bloomberg Open Enrollment</span><b>Oct 19 – Nov 6</b></div>
+      </div>
+
+      <div class="panel" style="margin-top:18px;">
+        <div class="panel-title">Weekly time budget</div>
+        <div class="panel-note">168 hrs, where it actually goes</div>
+        <div class="budget-bar" id="budgetBar"></div>
+        <div class="budget-legend" id="budgetLegend"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS = [
+  {key:'sun', label:'Sun', full:'Sunday', note:'Gym (4th session) + homework & post due 11:59 PM ET', blocks:[
+    {s:'00:00',e:'07:00',t:'Sleep',cat:'sleep'},
+    {s:'07:00',e:'08:30',t:'Gym (90 min)',cat:'move'},
+    {s:'08:30',e:'09:30',t:'Breakfast / free',cat:'free'},
+    {s:'09:30',e:'13:00',t:'Deep study block',cat:'study'},
+    {s:'13:00',e:'20:30',t:'Free / errands',cat:'free'},
+    {s:'20:30',e:'23:59',t:'Finalize & submit HW + post',cat:'study'},
+    {s:'23:59',e:'24:00',t:'Deadline',cat:'class'},
+  ]},
+  {key:'mon', label:'Mon', full:'Monday', note:'Standard weekday', blocks:std()},
+  {key:'tue', label:'Tue', full:'Tuesday', note:'MSFLive class night — Saxa 2', blocks:classDay()},
+  {key:'wed', label:'Wed', full:'Wednesday', note:'Standard weekday', blocks:std()},
+  {key:'thu', label:'Thu', full:'Thursday', note:'Standard weekday', blocks:std()},
+  {key:'fri', label:'Fri', full:'Friday', note:'No gym — evening with girlfriend', blocks:friDay()},
+  {key:'sat', label:'Sat', full:'Saturday', note:'Business ops — later start after late Friday nights', blocks:[
+    {s:'00:00',e:'10:00',t:'Sleep in',cat:'sleep'},
+    {s:'10:00',e:'11:30',t:'Deal sourcing — JPW Investments',cat:'source'},
+    {s:'11:30',e:'13:30',t:'Henderson Spirits bookkeeping',cat:'books'},
+    {s:'13:30',e:'14:30',t:'Lunch / free',cat:'free'},
+    {s:'14:30',e:'15:30',t:'Meal prep for the week',cat:'meal'},
+    {s:'15:30',e:'18:00',t:'Open — rest, errands (optional gym)',cat:'free'},
+    {s:'18:00',e:'23:00',t:'Girlfriend time',cat:'personal'},
+    {s:'23:00',e:'24:00',t:'Sleep',cat:'sleep'},
+  ]},
+];
+
+function std(){
+  return [
+    {s:'00:00',e:'05:00',t:'Sleep',cat:'sleep'},
+    {s:'05:00',e:'05:25',t:'Cardio',cat:'move'},
+    {s:'05:25',e:'06:15',t:'Shower / breakfast / prep',cat:'transit'},
+    {s:'06:15',e:'08:00',t:'Commute to work',cat:'transit'},
+    {s:'08:00',e:'17:00',t:'Work',cat:'work'},
+    {s:'17:00',e:'18:30',t:'Commute home',cat:'transit'},
+    {s:'18:30',e:'20:00',t:'Gym (90 min)',cat:'move'},
+    {s:'20:00',e:'20:45',t:'Dinner',cat:'meal'},
+    {s:'20:45',e:'22:15',t:'Study (90 min)',cat:'study'},
+    {s:'22:15',e:'23:00',t:'Job apps + wind down',cat:'jobs'},
+    {s:'23:00',e:'24:00',t:'Sleep',cat:'sleep'},
+  ];
+}
+function friDay(){
+  return [
+    {s:'00:00',e:'05:00',t:'Sleep',cat:'sleep'},
+    {s:'05:00',e:'05:25',t:'Cardio',cat:'move'},
+    {s:'05:25',e:'06:15',t:'Shower / breakfast / prep',cat:'transit'},
+    {s:'06:15',e:'08:00',t:'Commute to work',cat:'transit'},
+    {s:'08:00',e:'17:00',t:'Work',cat:'work'},
+    {s:'17:00',e:'18:30',t:'Commute home',cat:'transit'},
+    {s:'18:30',e:'24:00',t:'Girlfriend time',cat:'personal'},
+  ];
+}
+function classDay(){
+  return [
+    {s:'00:00',e:'05:00',t:'Sleep',cat:'sleep'},
+    {s:'05:00',e:'05:25',t:'Cardio',cat:'move'},
+    {s:'05:25',e:'06:15',t:'Shower / breakfast / prep',cat:'transit'},
+    {s:'06:15',e:'08:00',t:'Commute to work',cat:'transit'},
+    {s:'08:00',e:'17:00',t:'Work',cat:'work'},
+    {s:'17:00',e:'17:50',t:'Stay late — study / case prep',cat:'study'},
+    {s:'17:55',e:'19:30',t:'MSFLive class',cat:'class'},
+    {s:'19:30',e:'21:00',t:'Commute home',cat:'transit'},
+    {s:'21:00',e:'21:45',t:'Dinner',cat:'meal'},
+    {s:'21:45',e:'22:25',t:'Study (40 min, +50 min office = 90 total)',cat:'study'},
+    {s:'22:25',e:'23:00',t:'Job apps + wind down',cat:'jobs'},
+    {s:'23:00',e:'24:00',t:'Sleep',cat:'sleep'},
+  ];
+}
+
+const catClass = {sleep:'cat-sleep',transit:'cat-transit',work:'cat-work',move:'cat-move',study:'cat-study',class:'cat-class',meal:'cat-meal',free:'cat-free',source:'cat-source',books:'cat-books',jobs:'cat-jobs',personal:'cat-personal'};
+
+// --- Course modules & exam windows ---
+const MODULES = [
+  {n:1, label:'Time Value of Money', reading:'BMA Ch. 2', case:'Warren E. Buffett, 1995', start:'2026-08-17', end:'2026-08-25', live:'Aug 24–25'},
+  {n:2, label:'Valuing Government Bonds', reading:'BMA Ch. 3', case:'Fixed Income Arbitrage in a Financial Crisis', start:'2026-08-26', end:'2026-09-09', live:'Sep 8–9'},
+  {n:3, label:'Valuing Corporate Securities', reading:'BMA Ch. 4.1–4.3, Ch. 25', case:'Roche Holding AG: Funding the Genentech Acquisition', start:'2026-09-10', end:'2026-09-15', live:'Sep 14–15'},
+  {n:4, label:'Risk & Return: Portfolio Theory', reading:'BMA Ch. 7, Malkiel Ch. 8', case:'Partners Healthcare', start:'2026-09-16', end:'2026-09-22', live:'Sep 21–22'},
+  {n:5, label:'Asset Pricing: CAPM & Competitors', reading:'BMA Ch. 8, Malkiel Ch. 9', case:'Smart Beta ETFs & Factor Investing', start:'2026-09-23', end:'2026-09-29', live:'Sep 28–29'},
+  {n:6, label:'Efficient Market Hypothesis vs. Behavioral Finance', reading:'BMA Ch. 12, Malkiel Ch. 1–7,10–11,15', case:'Behavioral Finance at JP Morgan', start:'2026-09-30', end:'2026-10-06', live:'Oct 5–6'},
+];
+const EXAM_WINDOWS = [
+  {label:'Quiz week', start:'2026-08-26', end:'2026-08-30'},
+  {label:'Midterm week', start:'2026-09-16', end:'2026-09-20'},
+  {label:'Final exam week', start:'2026-10-07', end:'2026-10-11'},
+];
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function renderBanners(){
+  const t = todayStr();
+  const mod = MODULES.find(m=>t>=m.start && t<=m.end);
+  const modEl = document.getElementById('moduleBanner');
+  if(mod){
+    modEl.style.display='block';
+    modEl.innerHTML = `<b>Module ${mod.n}: ${mod.label}</b> — ${mod.reading} · Case: ${mod.case} <span style="color:var(--muted)">(MSFLive ${mod.live})</span>`;
+  }else{ modEl.style.display='none'; }
+
+  const exam = EXAM_WINDOWS.find(w=>t>=w.start && t<=w.end);
+  const examEl = document.getElementById('examAlert');
+  if(exam){
+    examEl.style.display='block';
+    examEl.innerHTML = `<b>⚠ ${exam.label}</b> — protect your study block this week.`;
+  }else{ examEl.style.display='none'; }
+}
+
+// --- Weekly time budget ---
+const GROUP_MAP = {
+  sleep:{label:'Sleep', color:'var(--slate)'},
+  transit:{label:'Commute', color:'#3a4560'},
+  work:{label:'Work', color:'#3E6FA6'},
+  move:{label:'Gym / Cardio', color:'var(--teal)'},
+  study:{label:'School', color:'var(--violet)'},
+  class:{label:'School', color:'var(--violet)'},
+  meal:{label:'Meals', color:'var(--gold)'},
+  jobs:{label:'Job search', color:'var(--cyan)'},
+  source:{label:'Business ops', color:'var(--rust)'},
+  books:{label:'Business ops', color:'var(--rust)'},
+  personal:{label:'Personal', color:'var(--pink)'},
+  free:{label:'Free / rest', color:'#3a4152'},
+};
+function renderBudget(){
+  const totals = {};
+  DAYS.forEach(day=>{
+    day.blocks.forEach(b=>{
+      const startMin = toMin(b.s);
+      const endMin = b.e==='24:00'?1440:toMin(b.e);
+      const dur = endMin-startMin;
+      const g = GROUP_MAP[b.cat];
+      totals[g.label] = (totals[g.label]||{mins:0, color:g.color});
+      totals[g.label].mins += dur;
+    });
+  });
+  const totalMins = 7*1440;
+  const entries = Object.entries(totals).sort((a,b)=>b[1].mins-a[1].mins);
+  const bar = document.getElementById('budgetBar');
+  const legend = document.getElementById('budgetLegend');
+  bar.innerHTML = '';
+  legend.innerHTML = '';
+  entries.forEach(([label, v])=>{
+    const pct = (v.mins/totalMins*100);
+    const hrs = (v.mins/60).toFixed(1);
+    const seg = document.createElement('div');
+    seg.style.width = pct+'%';
+    seg.style.background = v.color;
+    seg.title = `${label}: ${hrs} hrs/wk`;
+    bar.appendChild(seg);
+
+    const item = document.createElement('div');
+    const dot = document.createElement('div');
+    dot.className='dot';
+    dot.style.background = v.color;
+    item.appendChild(dot);
+    const txt = document.createElement('span');
+    txt.innerHTML = `${label} <b>${hrs}h</b>`;
+    item.appendChild(txt);
+    legend.appendChild(item);
+  });
+}
+
+function toMin(str){
+  const [h,m] = str.split(':').map(Number);
+  return h*60+m;
+}
+
+const tabsEl = document.getElementById('tabs');
+const trackEl = document.getElementById('track');
+const axisEl = document.getElementById('axis');
+const dayTitle = document.getElementById('dayTitle');
+const dayNote = document.getElementById('dayNote');
+const upNextEl = document.getElementById('upNext');
+
+const jsDayIdx = new Date().getDay(); // 0=sun
+const keyOrder = ['sun','mon','tue','wed','thu','fri','sat'];
+const todayKey = keyOrder[jsDayIdx];
+
+let activeKey = todayKey;
+
+// --- Weekly completion tracking (resets each week, stored locally per user) ---
+function mondayKey(){
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day===0?-6:1);
+  const mon = new Date(d.setDate(diff));
+  return mon.toISOString().slice(0,10);
+}
+const STORAGE_KEY = 'weekly-schedule-done:' + mondayKey();
+let doneSet = new Set();
+let storageReady = false;
+
+async function loadDone(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){ doneSet = new Set(JSON.parse(res.value)); }
+  }catch(e){ doneSet = new Set(); }
+  storageReady = true;
+  render();
+}
+async function saveDone(){
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify([...doneSet]), false); }
+  catch(e){ /* ignore */ }
+}
+function toggleDone(id){
+  if(doneSet.has(id)) doneSet.delete(id); else doneSet.add(id);
+  saveDone();
+  render();
+}
+
+function buildTabs(){
+  tabsEl.innerHTML = '';
+  DAYS.forEach(d=>{
+    const el = document.createElement('div');
+    el.className = 'tab' + (d.key===activeKey?' active':'') + (d.key===todayKey?' today':'');
+    el.textContent = d.label;
+    const dot = document.createElement('div');
+    dot.className='dot';
+    el.appendChild(dot);
+    el.onclick = ()=>{ activeKey = d.key; render(); };
+    tabsEl.appendChild(el);
+  });
+}
+
+const SCALE = 1200/1440; // px per minute, timeline ~1200px tall — enough for 15-min blocks to render cleanly
+
+function render(){
+  buildTabs();
+  const day = DAYS.find(d=>d.key===activeKey);
+  dayTitle.textContent = day.full;
+  dayNote.textContent = day.note;
+
+  const totalBlocks = DAYS.reduce((sum,d)=>sum+d.blocks.length, 0);
+  document.getElementById('completionStat').innerHTML = `${doneSet.size}/${totalBlocks}<span>this week</span>`;
+
+  trackEl.innerHTML = '';
+  axisEl.innerHTML = '';
+  trackEl.style.height = (1440*SCALE)+'px';
+  axisEl.style.height = (1440*SCALE)+'px';
+
+  for(let h=0; h<=24; h+=2){
+    const top = h*60*SCALE;
+    const hourline = document.createElement('div');
+    hourline.className='hourline';
+    hourline.style.top = top+'px';
+    trackEl.appendChild(hourline);
+
+    const label = document.createElement('span');
+    label.style.top = top+'px';
+    const hh = h===24?'24:00':(h<10?'0'+h:h)+':00';
+    label.textContent = hh;
+    axisEl.appendChild(label);
+  }
+
+  const now = new Date();
+  const nowMin = now.getHours()*60+now.getMinutes();
+
+  day.blocks.forEach((b, idx)=>{
+    const blockId = day.key+'-'+idx;
+    const startMin = toMin(b.s);
+    const endMin = b.e==='24:00'?1440:toMin(b.e);
+    const top = startMin*SCALE;
+    const height = (endMin-startMin)*SCALE;
+    const el = document.createElement('div');
+    const isDone = doneSet.has(blockId);
+    el.className = 'block ' + catClass[b.cat] + (isDone?' done':'');
+    el.style.top = top+'px';
+    el.style.height = height+'px';
+    el.title = `${b.t} (${b.s} – ${b.e}) — tap to mark done`;
+    const showTitle = height >= 20;
+    const showTime = height >= 32;
+    el.innerHTML = showTitle ? (`<div class="btitle">${b.t}</div>` + (showTime?`<div class="btime">${b.s} – ${b.e}</div>`:'') + `<div class="bcheck"></div>`) : `<div class="bcheck"></div>`;
+    el.onclick = ()=> toggleDone(blockId);
+    trackEl.appendChild(el);
+  });
+
+  if(activeKey===todayKey){
+    const line = document.createElement('div');
+    line.className='now-line';
+    line.style.top = (nowMin*SCALE)+'px';
+    const lbl = document.createElement('div');
+    lbl.className='now-label';
+    lbl.textContent = 'NOW';
+    line.appendChild(lbl);
+    trackEl.appendChild(line);
+
+    // Up next indicator
+    const blocks = day.blocks;
+    let current = null, next = null;
+    for(let i=0;i<blocks.length;i++){
+      const bs = toMin(blocks[i].s);
+      const be = blocks[i].e==='24:00'?1440:toMin(blocks[i].e);
+      if(nowMin>=bs && nowMin<be) current = blocks[i];
+      if(bs>nowMin && !next) next = blocks[i];
+    }
+    if(current || next){
+      upNextEl.style.display = 'block';
+      upNextEl.innerHTML = (current?`Now: <b>${current.t}</b> (till ${current.e})`:'') +
+        (current && next ? '  ·  ' : '') +
+        (next?`Next: <b>${next.t}</b> at ${next.s}`:'');
+    }else{
+      upNextEl.style.display = 'none';
+    }
+  }else{
+    upNextEl.style.display = 'none';
+  }
+}
+
+loadDone();
+renderBanners();
+renderBudget();
+setInterval(render, 60000);
+
+</script>
+</body>
+</html>
